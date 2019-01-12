@@ -43,6 +43,20 @@ SESSION_SECRET
 
 - App URL: https://backwoods-oauth.herokuapp.com
 
+To set up deployment, go to the server directory and initialize a separate git repository there. Then just add heroku as a remote:
+
+```
+$ heroku git:remote -a backwoods-oauth
+```
+
+Make sure your production environment variables are set in the [Heroku Dashboard](https://dashboard.heroku.com/apps/backwoods-oauth/settings)
+
+Then to deploy you just commit and do:
+
+```
+$ git push heroku master
+```
+
 # SSL
 
 We need to set up an SSL certificate during development if we want to work with Facebook OAuth.
