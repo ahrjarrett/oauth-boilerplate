@@ -10,7 +10,7 @@ const cors = require("cors");
 const socketio = require("socket.io");
 const authRouter = require("./lib/auth.router");
 const passportInit = require("./lib/passport.init");
-const { SESSION_SECRET, CLIENT_ORIGIN } = require("./config");
+const { CLIENT_ORIGIN } = require("./config");
 const app = express();
 let server;
 
