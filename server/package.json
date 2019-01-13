@@ -1,11 +1,11 @@
 {
-  "name": "social-auth-server",
-  "version": "0.0.1",
-  "description": "Server for React/Node Social auth",
+  "name": "oauth-boilerplate",
+  "version": "1.0.0",
+  "description": "Client & server config for Google, Facebook and Github OAuth in React",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server"
+    "start": "node server.js"
   },
   "dependencies": {
     "body-parser": "^1.18.3",
@@ -23,7 +23,10 @@
     "request-promise": "^4.2.2",
     "socket.io": "^2.1.1"
   },
-  "author": "funador",
+  "author": {
+    "name": "Andrew Jarrett",
+    "email": "ahrjarrett@gmail.com"
+  },
   "license": "MIT",
   "devDependencies": {
     "nodemon": "^1.17.4"

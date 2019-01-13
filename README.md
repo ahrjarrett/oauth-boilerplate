@@ -14,7 +14,9 @@ GITHUB_SECRET
 SESSION_SECRET
 ```
 
-# Google
+# Providers
+
+### Google
 
 - Project: oauth-test-2-trash
 - App name: backwoods-test-2
@@ -24,7 +26,7 @@ SESSION_SECRET
 - Authorized JavaScript origins: https://localhost:3000
 - Authorized Redirect URIs: https://localhost:8080/google/callback
 
-# Facebook
+### Facebook
 
 - App name: backwoods-test-2
 - Console: https://developers.facebook.com/apps/542728262890874/fb-login/settings/
@@ -32,7 +34,7 @@ SESSION_SECRET
 - Products: Facebook Login (unconfigured)
 - Valid OAuth Redirect URIs: https://localhost:8080/facebook/callback
 
-# Github
+### Github
 
 - App name: backwoods-test-2-trash
 - Console: https://github.com/settings/applications/966052
@@ -41,7 +43,7 @@ SESSION_SECRET
 
 # Deployment
 
-- App URL: https://backwoods-oauth.herokuapp.com
+- App URL: [https://backwoods-oauth.herokuapp.com](https://github.com/ahrjarrett/oauth-boilerplate/wake-up)
 
 To set up deployment, go to the server directory and initialize a separate git repository there. Then just add heroku as a remote:
 
@@ -51,7 +53,7 @@ $ heroku git:remote -a backwoods-oauth
 
 Make sure your production environment variables are set in the [Heroku Dashboard](https://dashboard.heroku.com/apps/backwoods-oauth/settings)
 
-Then to deploy you just commit and do:
+Then to deploy just commit and do:
 
 ```
 $ git push heroku master
@@ -61,17 +63,29 @@ $ git push heroku master
 
 We need to set up an SSL certificate during development if we want to work with Facebook OAuth.
 
-## Frontend Setup:
+This is the most annoying part, but it's really not bad.
 
-Frontend: For create-react-app we just pass `HTTPS=true` to our start script and it handles the certificate for us (different for Windows!)
+Both frontend and backend have to be secure even in development, otherwise Facebook craps the bed.
 
-## Backend Setup:
+Our backend cert will actually be signed and done legit but create-react-app (CRA) won't let us do our own certs without ejecting which fuck that, I'm fine with a little magic.
 
-Yep, there's some set up.
+### Frontend Setup:
 
-### Generate the Certificate
+`$ yarn dev`
 
-1. Generate a RSA-2048 key and save it to rootCA.key, remembering the password you enter when prompted:
+Runs `HTTPS=true react scripts start`, which is all you need to do.
+
+Don't forget it's on `https` not `http`, that one got me for a while.
+
+If Chrome complains go Advanced –> Proceed to Unsafety or whatever, also I recommend turning on Allow Insecure Certs on Localhost (see Troubleshooting below).
+
+### Backend Setup:
+
+Install openssl however you install things and do this:
+
+#### Generate the Certificate
+
+1. Generate a RSA-2048 key and save it to rootCA.key, don't forget your password because you'll need it:
 
    ```
    $ openssl genrsa -des3 -out rootCA.key 2048
@@ -85,62 +99,60 @@ Yep, there's some set up.
 
 3. Make the Root SSL Certificate Trustworthy
 
-   On OS X:
+   **On OS X:**
 
-   - Open Keychain app, go to "System" keychain and do File > Import Items
+   - Open Keychain app, go to "System" keychain and do File –> Import Items
    - Upload rootCA.pem
    - Double click uploaded certificate and change Trust levels to **Always Trust**
 
-4) Issue a Domain Certificate for localhost
+#### Issue a Domain Certificate for localhost
 
-   - Create an OpenSSL config file called `server.csr.cnf` and change the following values as needed:
+1.  Create an OpenSSL config file called `server.csr.cnf` and change the following values as you see fit (you don't have to, but the `[dn]` section shows on the cert itself):
 
-     ```
-     [req]
-     default_bits = 2048
-     prompt = no
-     default_md = sha256
-     distinguished_name = dn
+    ```
+    [req]
+    default_bits = 2048
+    prompt = no
+    default_md = sha256
+    distinguished_name = dn
 
-     [dn]
-     C=US
-     ST=RandomState
-     L=RandomCity
-     O=RandomOrganization
-     OU=RandomOrganizationUnit
-     emailAddress=hello@example.com
-     CN = localhost
-     ```
+    [dn]
+    C=US
+    ST=RandomState
+    L=RandomCity
+    O=RandomOrganization
+    OU=RandomOrganizationUnit
+    emailAddress=hello@example.com
+    CN = localhost
+    ```
 
-   - Create a `v3.ext` file, noticing the `subjectAltName` field ([subjectAltName FAQ](http://wiki.cacert.org/FAQ/subjectAltName)):
+2.  Create a `v3.ext` file, the `subjectAltName` part is important — [see the altName docs](http://wiki.cacert.org/FAQ/subjectAltName) for info:
 
-     ```
-     authorityKeyIdentifier=keyid,issuer
-     basicConstraints=CA:FALSE
-     keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
-     subjectAltName = @alt_names
+    ```
+    authorityKeyIdentifier=keyid,issuer
+    basicConstraints=CA:FALSE
+    keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+    subjectAltName = @alt_names
 
-     [alt_names]
-     DNS.1 = localhost
-     ```
+    [alt_names]
+    DNS.1 = localhost
+    ```
 
-   - Create certificate key for localhost
+3.  Create certificate key for localhost
+    Create a certificate key for localhost using the configuration settings stored in server.csr.cnf. The cert key is stored in `server.key`:
 
-     Create a certificate key for localhost using the configuration settings stored in server.csr.cnf. This key is stored in `server.key`:
+    ```
+    $ openssl req -new -sha256 -nodes -out server.csr -newkey rsa:2048 -keyout server.key -config <( cat server.csr.cnf )
+    ```
 
-     ```
-     $ openssl req -new -sha256 -nodes -out server.csr -newkey rsa:2048 -keyout server.key -config <( cat server.csr.cnf )
-     ```
+4.  Last, generate the `server.crt` file:
+    ```
+    $ openssl x509 -req -in server.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out server.crt -days 500 -sha256 -extfile v3.ext
+    ```
 
-   - Finally, generate your `server.crt` file:
+#### Use the certificate
 
-     ```
-     $ openssl x509 -req -in server.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out server.crt -days 500 -sha256 -extfile v3.ext
-     ```
-
-### Use the certificate
-
-Move `server.key` and `server.crt` to your project and spin up an `httpsServer` instance. Here's an example configuration:
+Move `server.key` and `server.crt` to `server/certs` and spin up an `httpsServer` instance. For example:
 
 ```javascript
 var path = require("path");
@@ -155,7 +167,18 @@ var certOptions = {
 
 var app = express();
 
-var server = https.createServer(certOptions, app).listen(443);
+var server = https.createServer(certOptions, app).listen(8080);
 ```
 
-Finally, _make sure_ you're going to https://localhost/8080 (or your port), not http. You should see the green lock.
+Go to https://localhost/8080. You should see the green lock.
+
+#### Troubleshooting:
+
+- Turn on the **[Allow insecure certs on localhost](chrome://flags/#allow-insecure-localhost)** flag in Chrome. CRA "handles" the certs but doesn't expose them to you, so this flag makes it easier to ignore Chrome complaining throughout development.
+
+- If your backend cert says its valid but you're not seeing green, do some digging in the DevTools:
+
+  > DevTools –> Security –> View Certificate
+
+- If you need to jog the browsers memory — sometimes it gets confused reading 2 root certs at the same damn time — flush local site data and close reopen the tab:
+  > DevTools –> Application –> Clear Storage –> Clear Site Data

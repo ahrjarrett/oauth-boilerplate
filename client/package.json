@@ -1,6 +1,6 @@
 {
-  "name": "social-auth-client",
-  "version": "0.0.1",
+  "name": "oauth-boilerplate",
+  "version": "1.0.0",
   "dependencies": {
     "prop-types": "^15.6.2",
     "react": "^16.3.2",
@@ -11,8 +11,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
     "dev": "HTTPS=true react-scripts start",
+    "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "deploy": "npm run build && netlify deploy"
